@@ -1,0 +1,16 @@
+language: python
+python:
+  - 3.4
+  - 3.3
+  - 3.2
+  - 2.7
+  - 2.6
+  - pypy
+install:
+  - pip install -r requirements.txt
+  - pip install coveralls
+script:
+  - flake8 .
+  - coverage run --source=serpy setup.py test
+after_success:
+  coveralls
