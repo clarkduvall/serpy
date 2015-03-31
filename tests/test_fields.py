@@ -24,11 +24,11 @@ class TestFields(unittest.TestCase):
                 return value
 
         field = Field()
-        self.assertFalse(Field._is_transform_overriden(field.transform_value))
+        self.assertFalse(field._is_transform_overriden())
         field = TransField()
-        self.assertTrue(Field._is_transform_overriden(field.transform_value))
-        self.assertTrue(Field._is_transform_overriden(None))
-        self.assertTrue(Field._is_transform_overriden(int))
+        self.assertTrue(field._is_transform_overriden())
+        field = IntField()
+        self.assertTrue(field._is_transform_overriden())
 
     def test_transform(self):
         class Add5Field(Field):
