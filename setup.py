@@ -34,5 +34,10 @@ setup(
     ],
     keywords=('serialization', 'rest', 'json', 'api', 'marshal',
               'marshalling', 'validation', 'schema', 'fast'),
-    packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
+    packages=find_packages(exclude=[
+        'contrib',
+        'docs',
+        'tests*',
+        'benchmarks'
+    ]),
 )
