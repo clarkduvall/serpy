@@ -1,4 +1,5 @@
 from operator import attrgetter
+import six
 import types
 
 
@@ -39,12 +40,20 @@ class Field(object):
         return getter
 
 
+class StrField(Field):
+    transform_value = staticmethod(six.text_type)
+
+
 class IntField(Field):
     transform_value = staticmethod(int)
 
 
 class FloatField(Field):
     transform_value = staticmethod(float)
+
+
+class BooleanField(Field):
+    transform_value = staticmethod(bool)
 
 
 class MethodField(Field):

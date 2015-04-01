@@ -1,5 +1,6 @@
 from .obj import Obj
-from serpy.fields import Field, MethodField, IntField, FloatField
+from serpy.fields import (
+    Field, MethodField, BooleanField, IntField, FloatField, StrField)
 import unittest
 
 
@@ -40,6 +41,18 @@ class TestFields(unittest.TestCase):
 
         fn = Add5Field(call=True).to_value_fn('b', None)
         self.assertEqual(fn(Obj(b=lambda: 6)), 11)
+
+    def test_str_field(self):
+        fn = StrField().to_value_fn('a', None)
+        self.assertEqual(fn(Obj(a='a')), 'a')
+        self.assertEqual(fn(Obj(a=5)), '5')
+
+    def test_boolean_field(self):
+        fn = BooleanField().to_value_fn('a', None)
+        self.assertTrue(fn(Obj(a=True)))
+        self.assertFalse(fn(Obj(a=False)))
+        self.assertTrue(fn(Obj(a=1)))
+        self.assertFalse(fn(Obj(a=0)))
 
     def test_int_field(self):
         fn = IntField().to_value_fn('a', None)
