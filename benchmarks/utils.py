@@ -6,13 +6,17 @@ import time
 class Obj(object):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
+            if isinstance(v, dict):
+                v = Obj(**v)
+            if isinstance(v, list):
+                v = [Obj(**attrs) for attrs in v]
             setattr(self, k, v)
 
 
-def write_csv(name, data, drf, marshmallow, serpy):
+def write_csv(name, data, drf, marshmallow, serpy, size):
     with open('{}.csv'.format(name), 'w+') as f:
         f.write(',DRF,Marshmallow,serpy\n')
-        for i in range(500, 10001, 500):
+        for i in range(10 * size, 101 * size, 10 * size):
             f.write(str(i))
             for serializer in (drf, marshmallow, serpy):
                 f.write(',')

@@ -24,4 +24,4 @@ class SimpleS(serpy.Serializer):
 
 if __name__ == '__main__':
     data = {'foo': 'bar'}
-    write_csv(__file__, data, SimpleRF, SimpleM().dumps, SimpleS)
+    write_csv(__file__, data, SimpleRF, SimpleM().dumps, SimpleS, 100)
