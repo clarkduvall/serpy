@@ -14,27 +14,23 @@ class Field(object):
         return value
     transform_value._base_implementation = True
 
-    def _is_transform_overriden(self):
+    def _is_transform_value_overriden(self):
         transform = self.transform_value
         if not isinstance(transform, types.MethodType):
             return True
         return not getattr(transform, '_base_implementation', False)
 
-    def to_value_fn(self, serializer_field_name, serializer_cls):
+    def get_value_fn(self, serializer_field_name, serializer_cls):
         attr_name = self.attr
         if attr_name is None:
             attr_name = serializer_field_name
         basic_getter = attrgetter(attr_name)
 
-        transform = None
-        if self._is_transform_overriden():
-            transform = self.transform_value
-
         if self.call:
             getter = lambda x: basic_getter(x)()
         else:
             getter = basic_getter
-        return getter, transform
+        return getter
 
 
 class StrField(Field):
@@ -60,8 +56,8 @@ class MethodField(Field):
         super(MethodField, self).__init__(**kwargs)
         self.method = method
 
-    def to_value_fn(self, serializer_field_name, serializer_cls):
+    def get_value_fn(self, serializer_field_name, serializer_cls):
         method_name = self.method
         if method_name is None:
             method_name = 'get_{0}'.format(serializer_field_name)
-        return getattr(serializer_cls, method_name), None
+        return getattr(serializer_cls, method_name)

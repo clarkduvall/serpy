@@ -1,5 +1,5 @@
 from .obj import Obj
-from serpy.fields import Field, MethodField
+from serpy.fields import Field, MethodField, IntField, FloatField, StrField
 from serpy.serializer import Serializer
 import unittest
 
@@ -109,6 +109,18 @@ class TestSerializer(unittest.TestCase):
         data = ASerializer(a).data
         self.assertEqual(data['a'], 7)
         self.assertEqual(data['b'], 11)
+
+    def test_transform_called(self):
+        class ASerializer(Serializer):
+            a = IntField()
+            b = FloatField(call=True)
+            c = StrField(attr='foo.bar.baz')
+
+        o = Obj(a='5', b=lambda: '6.2', foo=Obj(bar=Obj(baz=10)))
+        data = ASerializer(o).data
+        self.assertEqual(data['a'], 5)
+        self.assertEqual(data['b'], 6.2)
+        self.assertEqual(data['c'], '10')
 
 
 if __name__ == '__main__':

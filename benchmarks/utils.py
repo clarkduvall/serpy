@@ -14,18 +14,19 @@ class Obj(object):
 
 
 def write_csv(name, data, drf, marshmallow, serpy, size):
-    with open('{}.csv'.format(name), 'w+') as f:
+    repetitions = 10
+    with open('{0}.csv'.format(name), 'w+') as f:
         f.write(',DRF,Marshmallow,serpy\n')
         for i in range(10 * size, 101 * size, 10 * size):
-            f.write(str(i))
+            f.write(str(i * repetitions))
             for serializer in (drf, marshmallow, serpy):
                 f.write(',')
-                f.write(str(benchmark(serializer, 10, i, data=data)))
+                f.write(str(benchmark(serializer, repetitions, i, data=data)))
             f.write('\n')
 
 
-def benchmark(serializer_fn, times, num_objs=1, data=None):
-    total_objs = times * num_objs
+def benchmark(serializer_fn, repetitions, num_objs=1, data=None):
+    total_objs = repetitions * num_objs
     if not isinstance(serializer_fn, type):
         library = 'Marshmallow'
     elif issubclass(serializer_fn, serpy.Serializer):
@@ -43,7 +44,7 @@ def benchmark(serializer_fn, times, num_objs=1, data=None):
         objs = objs[0]
 
     t1 = time.time()
-    for i in range(times):
+    for i in range(repetitions):
         serializer_fn(objs, many=many).data
     total_time = time.time() - t1
     print('Total time: {}'.format(total_time))

@@ -16,20 +16,24 @@ class SerializerMeta(type):
                 all_fields.update(cls._fields)
         all_fields.update(fields)
 
-        simple_fields = []
+        function_fields = []
         method_fields = []
         for name, field in all_fields.items():
-            value_fn, transform = field.to_value_fn(name, serializer_cls)
+            value_fn = field.get_value_fn(name, serializer_cls)
+            transform = None
+            if field._is_transform_value_overriden():
+                transform = field.transform_value
+
             if field.uses_self:
                 method_fields.append((name, value_fn))
             else:
-                simple_fields.append((name, value_fn, transform))
+                function_fields.append((name, value_fn, transform))
 
-        return all_fields, simple_fields, method_fields
+        return all_fields, function_fields, method_fields
 
     def __new__(cls, name, bases, attrs):
         fields = {}
-        for attr_name, field in six.iteritems(attrs):
+        for attr_name, field in attrs.items():
             if isinstance(field, Field):
                 fields[attr_name] = field
         for k in fields.keys():
@@ -37,11 +41,11 @@ class SerializerMeta(type):
 
         real_cls = super(SerializerMeta, cls).__new__(cls, name, bases, attrs)
 
-        all_fields, simple_fields, method_fields = cls._make_field_lists(
+        all_fields, function_fields, method_fields = cls._make_field_lists(
             fields, real_cls)
 
         real_cls._fields = all_fields
-        real_cls._simple_fields = tuple(simple_fields)
+        real_cls._function_fields = tuple(function_fields)
         real_cls._method_fields = tuple(method_fields)
         return real_cls
 
@@ -54,24 +58,24 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
         self.many = many
         self._data = None
 
-    def _to_value(self, obj, simple_fields, method_fields):
+    def _to_value(self, obj, function_fields, method_fields):
         v = {}
-        for n, f, t in simple_fields:
-            r = f(obj)
-            if t:
-                r = t(r)
-            v[n] = r
-        for n, f in method_fields:
-            v[n] = f(self, obj)
+        for name, getter, transform in function_fields:
+            r = getter(obj)
+            if transform:
+                r = transform(r)
+            v[name] = r
+        for name, getter in method_fields:
+            v[name] = getter(self, obj)
         return v
 
     def transform_value(self, obj):
-        simple_fields = self._simple_fields
+        function_fields = self._function_fields
         method_fields = self._method_fields
         if self.many:
             to_value = self._to_value
-            return [to_value(o, simple_fields, method_fields) for o in obj]
-        return self._to_value(obj, simple_fields, method_fields)
+            return [to_value(o, function_fields, method_fields) for o in obj]
+        return self._to_value(obj, function_fields, method_fields)
 
     @property
     def data(self):
