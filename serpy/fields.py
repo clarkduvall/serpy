@@ -26,18 +26,15 @@ class Field(object):
             attr_name = serializer_field_name
         basic_getter = attrgetter(attr_name)
 
-        transform = self.transform_value
-        has_transform = self._is_transform_overriden()
+        transform = None
+        if self._is_transform_overriden():
+            transform = self.transform_value
+
         if self.call:
-            if has_transform:
-                getter = lambda x: transform(basic_getter(x)())
-            else:
-                getter = lambda x: basic_getter(x)()
-        elif has_transform:
-            getter = lambda x: transform(basic_getter(x))
+            getter = lambda x: basic_getter(x)()
         else:
             getter = basic_getter
-        return getter
+        return getter, transform
 
 
 class StrField(Field):
@@ -67,4 +64,4 @@ class MethodField(Field):
         method_name = self.method
         if method_name is None:
             method_name = 'get_{0}'.format(serializer_field_name)
-        return getattr(serializer_cls, method_name)
+        return getattr(serializer_cls, method_name), None

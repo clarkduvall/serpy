@@ -4,14 +4,21 @@ from serpy.fields import (
 import unittest
 
 
+def make_fn(value_fns):
+    value_fn, transform = value_fns
+    if transform is None:
+        return value_fn
+    return lambda x: transform(value_fn(x))
+
+
 class TestFields(unittest.TestCase):
 
     def test_simple(self):
-        fn = Field().to_value_fn('a', None)
+        fn, _ = Field().to_value_fn('a', None)
         self.assertEqual(fn(Obj(a=5)), 5)
 
     def test_call(self):
-        fn = Field(call=True).to_value_fn('a', None)
+        fn, _ = Field(call=True).to_value_fn('a', None)
         self.assertEqual(fn(Obj(a=lambda: 5)), 5)
 
     def test_transform_noop(self):
@@ -36,47 +43,47 @@ class TestFields(unittest.TestCase):
             def transform_value(self, value):
                 return value + 5
 
-        fn = Add5Field().to_value_fn('a', None)
+        fn = make_fn(Add5Field().to_value_fn('a', None))
         self.assertEqual(fn(Obj(a=5)), 10)
 
-        fn = Add5Field(call=True).to_value_fn('b', None)
+        fn = make_fn(Add5Field(call=True).to_value_fn('b', None))
         self.assertEqual(fn(Obj(b=lambda: 6)), 11)
 
     def test_str_field(self):
-        fn = StrField().to_value_fn('a', None)
+        fn = make_fn(StrField().to_value_fn('a', None))
         self.assertEqual(fn(Obj(a='a')), 'a')
         self.assertEqual(fn(Obj(a=5)), '5')
 
     def test_boolean_field(self):
-        fn = BooleanField().to_value_fn('a', None)
+        fn = make_fn(BooleanField().to_value_fn('a', None))
         self.assertTrue(fn(Obj(a=True)))
         self.assertFalse(fn(Obj(a=False)))
         self.assertTrue(fn(Obj(a=1)))
         self.assertFalse(fn(Obj(a=0)))
 
     def test_int_field(self):
-        fn = IntField().to_value_fn('a', None)
+        fn = make_fn(IntField().to_value_fn('a', None))
         self.assertEqual(fn(Obj(a=5)), 5)
         self.assertEqual(fn(Obj(a=5.4)), 5)
         self.assertEqual(fn(Obj(a='5')), 5)
 
     def test_float_field(self):
-        fn = FloatField().to_value_fn('a', None)
+        fn = make_fn(FloatField().to_value_fn('a', None))
         self.assertEqual(fn(Obj(a=5.2)), 5.2)
         self.assertEqual(fn(Obj(a='5.5')), 5.5)
 
     def test_custom_attr(self):
-        fn = Field(attr='b').to_value_fn('a', None)
+        fn, _ = Field(attr='b').to_value_fn('a', None)
         self.assertEqual(fn(Obj(b=5, a=1)), 5)
 
-        fn = Field(attr='b', call=True).to_value_fn('a', None)
+        fn, _ = Field(attr='b', call=True).to_value_fn('a', None)
         self.assertEqual(fn(Obj(b=lambda: 5, a=1)), 5)
 
     def test_dotted_attr(self):
-        fn = Field(attr='z.x').to_value_fn('a', None)
+        fn, _ = Field(attr='z.x').to_value_fn('a', None)
         self.assertEqual(fn(Obj(z=Obj(x='hi'), a=1)), 'hi')
 
-        fn = Field(attr='z.x', call=True).to_value_fn('a', None)
+        fn, _ = Field(attr='z.x', call=True).to_value_fn('a', None)
         self.assertEqual(fn(Obj(z=Obj(x=lambda: 'hi'), a=1)), 'hi')
 
     def test_method_field(self):
@@ -89,10 +96,10 @@ class TestFields(unittest.TestCase):
 
         serializer = FakeSerializer()
 
-        fn = MethodField().to_value_fn('a', serializer)
+        fn, _ = MethodField().to_value_fn('a', serializer)
         self.assertEqual(fn(Obj(a=3)), 3)
 
-        fn = MethodField('z_sub_1').to_value_fn('a', serializer)
+        fn, _ = MethodField('z_sub_1').to_value_fn('a', serializer)
         self.assertEqual(fn(Obj(z=3)), 2)
 
         self.assertTrue(MethodField.uses_self)

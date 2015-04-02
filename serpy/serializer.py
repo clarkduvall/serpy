@@ -1,5 +1,4 @@
 from serpy.fields import Field
-from six.moves import map
 import six
 
 
@@ -20,11 +19,11 @@ class SerializerMeta(type):
         simple_fields = []
         method_fields = []
         for name, field in all_fields.items():
-            value_fn = field.to_value_fn(name, serializer_cls)
+            value_fn, transform = field.to_value_fn(name, serializer_cls)
             if field.uses_self:
                 method_fields.append((name, value_fn))
             else:
-                simple_fields.append((name, value_fn))
+                simple_fields.append((name, value_fn, transform))
 
         return all_fields, simple_fields, method_fields
 
@@ -55,28 +54,27 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
         self.many = many
         self._data = None
 
-    def to_value_fn(self, name, cls):
-        value_fn = super(Serializer, self).to_value_fn(name, cls)
-
-        def get_data(x):
-            return self._get_data(value_fn(x))
-        return get_data
-
-    def _to_value(self, obj):
+    def _to_value(self, obj, simple_fields, method_fields):
         v = {}
-        for n, f in self._simple_fields:
-            v[n] = f(obj)
-        for n, f in self._method_fields:
+        for n, f, t in simple_fields:
+            r = f(obj)
+            if t:
+                r = t(r)
+            v[n] = r
+        for n, f in method_fields:
             v[n] = f(self, obj)
         return v
 
-    def _get_data(self, obj):
+    def transform_value(self, obj):
+        simple_fields = self._simple_fields
+        method_fields = self._method_fields
         if self.many:
-            return list(map(self._to_value, obj))
-        return self._to_value(obj)
+            to_value = self._to_value
+            return [to_value(o, simple_fields, method_fields) for o in obj]
+        return self._to_value(obj, simple_fields, method_fields)
 
     @property
     def data(self):
         if self._data is None:
-            self._data = self._get_data(self.obj)
+            self._data = self.transform_value(self.obj)
         return self._data
