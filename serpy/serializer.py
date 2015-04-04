@@ -3,82 +3,115 @@ import six
 
 
 class SerializerBase(Field):
-    _fields = {}
+    _field_map = {}
+
+
+def _compile_field_to_tuple(field, name, serializer_cls):
+    getter = field.as_getter(name, serializer_cls)
+
+    # Only set a transform function if it has been overriden for performance.
+    transform = None
+    if field._is_transform_value_overriden():
+        transform = field.transform_value
+
+    return name, getter, transform, field.call, field.uses_self
 
 
 class SerializerMeta(type):
 
     @staticmethod
-    def _make_field_lists(fields, serializer_cls):
-        all_fields = {}
+    def _get_fields(direct_fields, serializer_cls):
+        field_map = {}
+        # Get all the fields from base classes.
         for cls in serializer_cls.__mro__[::-1]:
             if issubclass(cls, SerializerBase):
-                all_fields.update(cls._fields)
-        all_fields.update(fields)
+                field_map.update(cls._field_map)
+        field_map.update(direct_fields)
 
-        function_fields = []
-        method_fields = []
-        for name, field in all_fields.items():
-            value_fn = field.get_value_fn(name, serializer_cls)
-            transform = None
-            if field._is_transform_value_overriden():
-                transform = field.transform_value
+        compiled_fields = [
+            _compile_field_to_tuple(field, name, serializer_cls)
+            for name, field in field_map.items()
+        ]
 
-            if field.uses_self:
-                method_fields.append((name, value_fn))
-            else:
-                function_fields.append((name, value_fn, transform))
-
-        return all_fields, function_fields, method_fields
+        return field_map, compiled_fields
 
     def __new__(cls, name, bases, attrs):
-        fields = {}
+        # Fields declared directly on the class.
+        direct_fields = {}
+
+        # Take all the Fields from the attributes.
         for attr_name, field in attrs.items():
             if isinstance(field, Field):
-                fields[attr_name] = field
-        for k in fields.keys():
+                direct_fields[attr_name] = field
+        for k in direct_fields.keys():
             del attrs[k]
 
         real_cls = super(SerializerMeta, cls).__new__(cls, name, bases, attrs)
 
-        all_fields, function_fields, method_fields = cls._make_field_lists(
-            fields, real_cls)
+        field_map, compiled_fields = cls._get_fields(direct_fields, real_cls)
 
-        real_cls._fields = all_fields
-        real_cls._function_fields = tuple(function_fields)
-        real_cls._method_fields = tuple(method_fields)
+        real_cls._field_map = field_map
+        real_cls._compiled_fields = tuple(compiled_fields)
         return real_cls
 
 
 class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
+    """:class:`Serializer` is used as a base for custom serializers.
 
+    The :class:`Serializer` class is also a subclass of :class:`Field`, and can
+    be used as a :class:`Field` to create nested schemas. A serializer is
+    defined by subclassing :class:`Serializer` and adding each :class:`Field`
+    as a class variable:
+
+    Example: ::
+
+        class FooSerializer(Serializer):
+            foo = Field()
+            bar = Field()
+
+        foo = Foo(foo='hello', bar=5)
+        FooSerializer(foo).data
+        # {'foo': 'hello', 'bar': 5}
+
+    :param obj: The object or objects to serialize.
+    :param bool many: If ``obj`` is a collection of objects, set ``many`` to
+        ``True`` to serialize to a list.
+    """
     def __init__(self, obj=None, many=False, **kwargs):
         super(Serializer, self).__init__(**kwargs)
         self.obj = obj
         self.many = many
         self._data = None
 
-    def _to_value(self, obj, function_fields, method_fields):
+    def _to_value(self, obj, fields):
         v = {}
-        for name, getter, transform in function_fields:
-            r = getter(obj)
-            if transform:
-                r = transform(r)
-            v[name] = r
-        for name, getter in method_fields:
-            v[name] = getter(self, obj)
+        for name, getter, transform, call, uses_self in fields:
+            if uses_self:
+                result = getter(self, obj)
+            else:
+                result = getter(obj)
+                if call:
+                    result = result()
+                if transform:
+                    result = transform(result)
+            v[name] = result
+
         return v
 
     def transform_value(self, obj):
-        function_fields = self._function_fields
-        method_fields = self._method_fields
+        fields = self._compiled_fields
         if self.many:
             to_value = self._to_value
-            return [to_value(o, function_fields, method_fields) for o in obj]
-        return self._to_value(obj, function_fields, method_fields)
+            return [to_value(o, fields) for o in obj]
+        return self._to_value(obj, fields)
 
     @property
     def data(self):
+        """Get the serialized data from the :class:`Serializer`.
+
+        The data will be cached for future accesses.
+        """
+        # Cache the data for next time .data is called.
         if self._data is None:
             self._data = self.transform_value(self.obj)
         return self._data
