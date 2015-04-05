@@ -20,7 +20,7 @@ class Field(object):
     #: Set to ``True`` if the value function returned from
     #: :meth:`Field.as_getter` requires the serializer to be passed in as the
     #: first argument. Otherwise, the object will be the only parameter.
-    uses_self = False
+    getter_takes_serializer = False
 
     def __init__(self, attr=None, call=False):
         self.attr = attr
@@ -56,11 +56,11 @@ class Field(object):
         serialized, and the return value will be passed through
         :meth:`Field.transform_value`.
 
-        If a :class:`Field` has ``uses_self = True``, then the getter returned
-        from this method will be called with the :class:`Serializer` instance
-        as the first argument, and the object being serialized as the second.
-        Otherwise the getter will be called with the object as the only
-        argument.
+        If a :class:`Field` has ``getter_takes_serializer = True``, then the
+        getter returned from this method will be called with the
+        :class:`Serializer` instance as the first argument, and the object
+        being serialized as the second.  Otherwise the getter will be called
+        with the object as the only argument.
 
         :param str serializer_field_name: The name this field was assigned to
             on the serializer.
@@ -87,7 +87,7 @@ class FloatField(Field):
     transform_value = staticmethod(float)
 
 
-class BooleanField(Field):
+class BoolField(Field):
     """A :class:`Field` that converts the value to a boolean."""
     transform_value = staticmethod(bool)
 
@@ -99,19 +99,23 @@ class MethodField(Field):
     from multiple attributes on an object. For example: ::
 
         class FooSerializer(Serializer):
-            foo = MethodField()
+            plus = MethodField()
+            minus = MethodField('do_minus')
 
-            def get_foo(self, foo_obj):
+            def get_plus(self, foo_obj):
                 return foo_obj.bar + foo_obj.baz
+
+            def do_minus(self, foo_obj):
+                return foo_obj.bar - foo_obj.baz
 
         foo = Foo(bar=5, baz=10)
         FooSerializer(foo).data
-        # {'foo': 15}
+        # {'plus': 15, 'minus': -5}
 
     :param str method: The method on the serializer to call. Defaults to
         ``'get_<field name>'``.
     """
-    uses_self = True
+    getter_takes_serializer = True
 
     def __init__(self, method=None, **kwargs):
         super(MethodField, self).__init__(**kwargs)

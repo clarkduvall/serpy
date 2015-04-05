@@ -14,7 +14,7 @@ def _compile_field_to_tuple(field, name, serializer_cls):
     if field._is_transform_value_overriden():
         transform = field.transform_value
 
-    return name, getter, transform, field.call, field.uses_self
+    return name, getter, transform, field.call, field.getter_takes_serializer
 
 
 class SerializerMeta(type):
@@ -85,8 +85,8 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
 
     def _to_value(self, obj, fields):
         v = {}
-        for name, getter, transform, call, uses_self in fields:
-            if uses_self:
+        for name, getter, transform, call, getter_takes_serializer in fields:
+            if getter_takes_serializer:
                 result = getter(self, obj)
             else:
                 result = getter(obj)

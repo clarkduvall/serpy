@@ -1,6 +1,6 @@
 from .obj import Obj
 from serpy.fields import (
-    Field, MethodField, BooleanField, IntField, FloatField, StrField)
+    Field, MethodField, BoolField, IntField, FloatField, StrField)
 import unittest
 
 
@@ -56,8 +56,8 @@ class TestFields(unittest.TestCase):
         self.assertEqual(fn(Obj(a='a')), 'a')
         self.assertEqual(fn(Obj(a=5)), '5')
 
-    def test_boolean_field(self):
-        fn = make_fn_from_field(BooleanField(), 'a')
+    def test_bool_field(self):
+        fn = make_fn_from_field(BoolField(), 'a')
         self.assertTrue(fn(Obj(a=True)))
         self.assertFalse(fn(Obj(a=False)))
         self.assertTrue(fn(Obj(a=1)))
@@ -104,7 +104,7 @@ class TestFields(unittest.TestCase):
         fn = MethodField('z_sub_1').as_getter('a', serializer)
         self.assertEqual(fn(Obj(z=3)), 2)
 
-        self.assertTrue(MethodField.uses_self)
+        self.assertTrue(MethodField.getter_takes_serializer)
 
 if __name__ == '__main__':
     unittest.main()

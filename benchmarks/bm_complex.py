@@ -63,7 +63,6 @@ class SubS(serpy.Serializer):
 class ComplexS(serpy.Serializer):
     foo = serpy.StrField()
     bar = serpy.IntField(call=True)
-    # TODO: Make subserializers more efficient.
     sub = SubS()
     subs = SubS(many=True)
 
