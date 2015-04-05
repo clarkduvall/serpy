@@ -11,6 +11,14 @@ serpy: ridiculously fast object serialization
     :target: https://coveralls.io/r/clarkduvall/serpy?branch=master
     :alt: Coveralls
 
+.. image:: https://readthedocs.org/projects/serpy/badge/?version=latest
+    :target: https://readthedocs.org/projects/serpy/?badge=latest
+    :alt: Documentation Status
+
+.. image:: https://pypip.in/download/serpy/badge.svg
+    :target: https://pypi.python.org/pypi/serpy/
+    :alt: Downloads
+
 
 **serpy** is a super simple object serialization framework built for speed.
 Compared to other popular Python serialization frameworks like `marshmallow
