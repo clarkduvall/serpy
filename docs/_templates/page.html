@@ -1,0 +1,9 @@
+{% extends "!page.html" %}
+{% block extrahead %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ pathto('_static/theme-overrides.css', 1) }}" type="text/css" />
+{% endblock %}
+{% block menu %}
+  {{ super() }}
+  <iframe src="https://ghbtns.com/github-btn.html?user=clarkduvall&repo=serpy&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px" style="margin-left: 23px; margin-top: 10px;"></iframe>
+{% endblock %}

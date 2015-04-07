@@ -1,0 +1,9 @@
+.badges {
+  margin-bottom: 20px;
+}
+
+@media screen and (max-width: 768px) {
+  .badges img {
+    width: auto;
+  }
+}

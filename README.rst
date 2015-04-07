@@ -2,22 +2,24 @@
 serpy: ridiculously fast object serialization
 *********************************************
 
-.. image:: https://travis-ci.org/clarkduvall/serpy.svg?branch=master
-    :target: https://travis-ci.org/clarkduvall/serpy?branch=master
-    :alt: Travis-CI
+.. container:: badges
+
+    .. image:: https://travis-ci.org/clarkduvall/serpy.svg?branch=master
+        :target: https://travis-ci.org/clarkduvall/serpy?branch=master
+        :alt: Travis-CI
 
 
-.. image:: https://coveralls.io/repos/clarkduvall/serpy/badge.svg?branch=master
-    :target: https://coveralls.io/r/clarkduvall/serpy?branch=master
-    :alt: Coveralls
+    .. image:: https://coveralls.io/repos/clarkduvall/serpy/badge.svg?branch=master
+        :target: https://coveralls.io/r/clarkduvall/serpy?branch=master
+        :alt: Coveralls
 
-.. image:: https://readthedocs.org/projects/serpy/badge/?version=latest
-    :target: https://readthedocs.org/projects/serpy/?badge=latest
-    :alt: Documentation Status
+    .. image:: https://readthedocs.org/projects/serpy/badge/?version=latest
+        :target: https://readthedocs.org/projects/serpy/?badge=latest
+        :alt: Documentation Status
 
-.. image:: https://pypip.in/download/serpy/badge.svg
-    :target: https://pypi.python.org/pypi/serpy/
-    :alt: Downloads
+    .. image:: https://pypip.in/download/serpy/badge.svg
+        :target: https://pypi.python.org/pypi/serpy/
+        :alt: Downloads
 
 
 **serpy** is a super simple object serialization framework built for speed.
