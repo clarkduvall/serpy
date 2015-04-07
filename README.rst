@@ -21,11 +21,19 @@ serpy: ridiculously fast object serialization
 
 
 **serpy** is a super simple object serialization framework built for speed.
-Compared to other popular Python serialization frameworks like `marshmallow
+**serpy** serializes complex datatypes (Django Models, custom classes, ...) to
+simple native types (dicts, lists, strings, ...). The native types can easily
+be converted to JSON or any other format needed.
+
+The goal of **serpy** is to be able to do this *simply*, *reliably*, and
+*quickly*. Since serializers are class based, they can be combined, extended
+and customized with very little code duplication. Compared to other popular
+Python serialization frameworks like `marshmallow
 <http://marshmallow.readthedocs.org>`_ or `Django Rest Framework Serializers
 <http://www.django-rest-framework.org/api-guide/serializers/>`_ **serpy** is at
 least an `order of magnitude
 <http://serpy.readthedocs.org/en/latest/performance.html>`_ faster.
+
 
 Source
 ======
@@ -131,6 +139,34 @@ Complex Example
     f = Foo()
     FooSerializer(f).data
     # {'w': 10, 'x': 5, 'plus': 3}
+
+Inheritance Example
+-------------------
+.. code-block:: python
+
+    import serpy
+
+    class Foo(object):
+        a = 1
+        b = 2
+
+
+    class ASerializer(serpy.Serializer):
+        a = serpy.Field()
+
+
+    class ABSerializer(ASerializer):
+        """ABSerializer inherits the 'a' field from ASerializer.
+
+        This also works with multiple inheritance and mixins.
+        """
+        b = serpy.Field()
+
+    f = Foo()
+    ASerializer(f).data
+    # {'a': 1}
+    ABSerializer(f).data
+    # {'a': 1, 'b': 2}
 
 License
 =======

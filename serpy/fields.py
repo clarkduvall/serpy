@@ -1,4 +1,3 @@
-from operator import attrgetter
 import six
 import types
 
@@ -8,88 +7,90 @@ class Field(object):
 
     A :class:`Field` maps a property or function on an object to a value in the
     serialized result. Subclass this to make custom fields. For most simple
-    cases, overriding :meth:`Field.transform_value` should give enough
-    flexibility. If more control is needed, override :meth:`Field.as_getter`.
+    cases, overriding :meth:`Field.to_value` should give enough flexibility. If
+    more control is needed, override :meth:`Field.as_getter`.
 
     :param str attr: The attribute to get on the object, using the same format
         as ``operator.attrgetter``. If this is not supplied, the name this
         field was assigned to on the serializer will be used.
     :param bool call: Whether the value should be called after it is retrieved
         from the object. Useful if an object has a method to be serialized.
+    :param bool required: Whether the field is required. If set to ``False``,
+        :meth:`Field.to_value` will not be called if the value is ``None``.
     """
     #: Set to ``True`` if the value function returned from
     #: :meth:`Field.as_getter` requires the serializer to be passed in as the
     #: first argument. Otherwise, the object will be the only parameter.
     getter_takes_serializer = False
 
-    def __init__(self, attr=None, call=False):
+    def __init__(self, attr=None, call=False, required=True):
         self.attr = attr
         self.call = call
+        self.required = required
 
-    def transform_value(self, value):
+    def to_value(self, value):
         """Transform the serialized value.
 
         Override this method to clean and validate values serialized by this
         field. For example to implement an ``int`` field: ::
 
-            def transform_value(self, value):
+            def to_value(self, value):
                 return int(value)
 
         :param value: The value fetched from the object being serialized.
         """
         return value
-    transform_value._serpy_base_implementation = True
+    to_value._serpy_base_implementation = True
 
-    def _is_transform_value_overriden(self):
-        transform = self.transform_value
-        # If transform isn't a method, it must have been overriden.
-        if not isinstance(transform, types.MethodType):
+    def _is_to_value_overriden(self):
+        to_value = self.to_value
+        # If to_value isn't a method, it must have been overriden.
+        if not isinstance(to_value, types.MethodType):
             return True
-        return not getattr(transform, '_serpy_base_implementation', False)
+        return not getattr(to_value, '_serpy_base_implementation', False)
 
     def as_getter(self, serializer_field_name, serializer_cls):
         """Returns a function that fetches an attribute from an object.
+
+        Return ``None`` to use the default getter for the serializer defined in
+        :attr:`Serializer.default_getter`.
 
         When a :class:`Serializer` is defined, each :class:`Field` will be
         converted into a getter function using this method. During
         serialization, each getter will be called with the object being
         serialized, and the return value will be passed through
-        :meth:`Field.transform_value`.
+        :meth:`Field.to_value`.
 
         If a :class:`Field` has ``getter_takes_serializer = True``, then the
         getter returned from this method will be called with the
         :class:`Serializer` instance as the first argument, and the object
-        being serialized as the second.  Otherwise the getter will be called
-        with the object as the only argument.
+        being serialized as the second.
 
         :param str serializer_field_name: The name this field was assigned to
             on the serializer.
         :param serializer_cls: The :class:`Serializer` this field is a part of.
         """
-        attr_name = self.attr
-        if attr_name is None:
-            attr_name = serializer_field_name
-        return attrgetter(attr_name)
+        return None
 
 
 class StrField(Field):
     """A :class:`Field` that converts the value to a string."""
-    transform_value = staticmethod(six.text_type)
+    to_value = staticmethod(six.text_type)
 
 
 class IntField(Field):
     """A :class:`Field` that converts the value to an integer."""
-    transform_value = staticmethod(int)
+    to_value = staticmethod(int)
 
 
 class FloatField(Field):
     """A :class:`Field` that converts the value to a float."""
-    transform_value = staticmethod(float)
+    to_value = staticmethod(float)
 
 
 class BoolField(Field):
     """A :class:`Field` that converts the value to a boolean."""
-    transform_value = staticmethod(bool)
+    to_value = staticmethod(bool)
 
 
 class MethodField(Field):

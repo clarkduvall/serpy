@@ -1,4 +1,5 @@
 from serpy.fields import Field
+import operator
 import six
 
 
@@ -8,13 +9,16 @@ class SerializerBase(Field):
 
 def _compile_field_to_tuple(field, name, serializer_cls):
     getter = field.as_getter(name, serializer_cls)
+    if getter is None:
+        getter = serializer_cls.default_getter(field.attr or name)
 
-    # Only set a transform function if it has been overriden for performance.
-    transform = None
-    if field._is_transform_value_overriden():
-        transform = field.transform_value
+    # Only set a to_value function if it has been overriden for performance.
+    to_value = None
+    if field._is_to_value_overriden():
+        to_value = field.to_value
 
-    return name, getter, transform, field.call, field.getter_takes_serializer
+    return (name, getter, to_value, field.call, field.required,
+            field.getter_takes_serializer)
 
 
 class SerializerMeta(type):
@@ -77,33 +81,37 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
     :param bool many: If ``obj`` is a collection of objects, set ``many`` to
         ``True`` to serialize to a list.
     """
+    #: The default getter used if :meth:`Field.as_getter` returns None.
+    default_getter = operator.attrgetter
+
     def __init__(self, obj=None, many=False, **kwargs):
         super(Serializer, self).__init__(**kwargs)
         self.obj = obj
         self.many = many
         self._data = None
 
-    def _to_value(self, obj, fields):
+    def _serialize(self, obj, fields):
         v = {}
-        for name, getter, transform, call, getter_takes_serializer in fields:
-            if getter_takes_serializer:
+        for name, getter, to_value, call, required, pass_self in fields:
+            if pass_self:
                 result = getter(self, obj)
             else:
                 result = getter(obj)
-                if call:
-                    result = result()
-                if transform:
-                    result = transform(result)
+                if required or result is not None:
+                    if call:
+                        result = result()
+                    if to_value:
+                        result = to_value(result)
             v[name] = result
 
         return v
 
-    def transform_value(self, obj):
+    def to_value(self, obj):
         fields = self._compiled_fields
         if self.many:
-            to_value = self._to_value
-            return [to_value(o, fields) for o in obj]
-        return self._to_value(obj, fields)
+            serialize = self._serialize
+            return [serialize(o, fields) for o in obj]
+        return self._serialize(obj, fields)
 
     @property
     def data(self):
@@ -113,5 +121,25 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
         """
         # Cache the data for next time .data is called.
         if self._data is None:
-            self._data = self.transform_value(self.obj)
+            self._data = self.to_value(self.obj)
         return self._data
+
+
+class DictSerializer(Serializer):
+    """:class:`DictSerializer` serializes python ``dicts`` instead of objects.
+
+    Instead of the serializer's fields fetching data using
+    ``operator.attrgetter``, :class:`DictSerializer` uses
+    ``operator.itemgetter``.
+
+    Example: ::
+
+        class FooSerializer(DictSerializer):
+            foo = IntField()
+            bar = FloatField()
+
+        foo = {'foo': '5', 'bar': '2.2'}
+        FooSerializer(foo).data
+        # {'foo': 5, 'bar': 2.2}
+    """
+    default_getter = operator.itemgetter

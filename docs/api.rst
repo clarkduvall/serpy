@@ -5,7 +5,12 @@ API Reference
 Serializer
 ==========
 
-.. autoclass:: serpy.Serializer
+.. currentmodule:: serpy
+
+.. autoclass:: Serializer
+   :members:
+
+.. autoclass:: DictSerializer
    :members:
 
 Fields
@@ -14,20 +19,20 @@ Fields
 If none of these fields fit your needs, **serpy** makes it simple to create
 custom fields. See the `Custom Fields <custom-fields.html>`_ documentation.
 
-.. autoclass:: serpy.Field
+.. autoclass:: Field
    :members:
 
-.. autoclass:: serpy.StrField
+.. autoclass:: StrField
    :members:
 
-.. autoclass:: serpy.IntField
+.. autoclass:: IntField
    :members:
 
-.. autoclass:: serpy.FloatField
+.. autoclass:: FloatField
    :members:
 
-.. autoclass:: serpy.BoolField
+.. autoclass:: BoolField
    :members:
 
-.. autoclass:: serpy.MethodField
+.. autoclass:: MethodField
    :members:
