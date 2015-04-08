@@ -5,7 +5,7 @@ import django
 django.setup()
 
 from rest_framework import serializers as rf_serializers
-from utils import write_csv
+from utils import write_csv, FakeJson
 import marshmallow
 import serpy
 
@@ -48,6 +48,9 @@ class ComplexM(marshmallow.Schema):
     bar = CallField()
     sub = marshmallow.fields.Nested(SubM)
     subs = marshmallow.fields.Nested(SubM, many=True)
+
+    class Meta:
+        json_module = FakeJson()
 
 
 class SubS(serpy.Serializer):

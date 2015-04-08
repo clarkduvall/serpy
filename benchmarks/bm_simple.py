@@ -5,7 +5,7 @@ import django
 django.setup()
 
 from rest_framework import serializers as rf_serializers
-from utils import write_csv
+from utils import write_csv, FakeJson
 import marshmallow
 import serpy
 
@@ -16,6 +16,9 @@ class SimpleRF(rf_serializers.Serializer):
 
 class SimpleM(marshmallow.Schema):
     foo = marshmallow.fields.Str()
+
+    class Meta:
+        json_module = FakeJson()
 
 
 class SimpleS(serpy.Serializer):
