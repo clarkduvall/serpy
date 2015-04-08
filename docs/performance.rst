@@ -1,6 +1,6 @@
-***********
-Performance
-***********
+**********************
+Performance Benchmarks
+**********************
 
 **serpy** was compared against two other popular serializer frameworks:
 
@@ -16,10 +16,7 @@ directory in the **serpy** `GitHub repository
 .. code-block:: bash
 
    $ git clone https://github.com/clarkduvall/serpy.git && cd serpy
-   $ # make a virtualenv with your preferred method
-   $ pip install -r benchmarks/requirements.txt
-   $ python benchmarks/bm_simple.py  # or...
-   $ python benchmarks/bm_complex.py
+   $ tox -e benchmarks
 
 Results
 =======

@@ -5,7 +5,7 @@ import django
 django.setup()
 
 from rest_framework import serializers as rf_serializers
-from utils import write_csv, FakeJson
+from utils import write_csv
 import marshmallow
 import serpy
 
@@ -49,9 +49,6 @@ class ComplexM(marshmallow.Schema):
     sub = marshmallow.fields.Nested(SubM)
     subs = marshmallow.fields.Nested(SubM, many=True)
 
-    class Meta:
-        json_module = FakeJson()
-
 
 class SubS(serpy.Serializer):
     w = serpy.IntField()
@@ -87,4 +84,4 @@ if __name__ == '__main__':
             'z': 10 * i
         } for i in range(10)]
     }
-    write_csv(__file__, data, ComplexRF, ComplexM().dumps, ComplexS, 1)
+    write_csv(__file__, data, ComplexRF, ComplexM().dump, ComplexS, 1)

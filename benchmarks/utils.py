@@ -3,12 +3,6 @@ import serpy
 import time
 
 
-class FakeJson(object):
-    """Pass through JSON module to prevent marshmallow from doing more work."""
-    def dumps(self, v):
-        return v
-
-
 class Obj(object):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
