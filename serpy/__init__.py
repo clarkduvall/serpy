@@ -2,6 +2,10 @@ from serpy.fields import (
     Field, BoolField, IntField, FloatField, MethodField, StrField)
 from serpy.serializer import Serializer, DictSerializer
 
+__version__ = '0.0.3'
+__author__ = 'Clark DuVall'
+__license__ = 'MIT'
+
 __all__ = [
     'Serializer',
     'DictSerializer',
