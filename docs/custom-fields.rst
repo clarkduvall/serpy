@@ -3,14 +3,14 @@ Custom Fields
 *************
 
 The most common way to create a custom field with **serpy** is to override
-:meth:`serpy.Field.to_value`. This method is called on the value
+:meth:`serpy.Field.to_representation`. This method is called on the value
 retrieved from the object being serialized. For example, to create a field that
 adds 5 to every value it serializes, do:
 
 .. code-block:: python
 
    class Add5Field(serpy.Field):
-      def to_value(self, value):
+      def to_representation(self, value):
          return value + 5
 
 Then to use it:
@@ -25,7 +25,7 @@ Then to use it:
 
    f = Obj()
    f.foo = 9
-   ObjSerializer(f).data
+   ObjSerializer(f).representation
    # {'foo': 14}
 
 Another use for custom fields is data validation. For example, to validate that
@@ -34,7 +34,7 @@ every serialized value has a ``'.'`` in it:
 .. code-block:: python
 
    class ValidateDotField(serpy.Field):
-      def to_value(self, value):
+      def to_representation(self, value):
          if '.' not in value:
             raise ValidationError('no dot!')
          return value
