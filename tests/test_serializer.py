@@ -170,6 +170,9 @@ class TestSerializer(unittest.TestCase):
         o = Obj(a=None)
         self.assertRaises(TypeError, lambda: ASerializer(o).data)
 
+    def test_error_on_data(self):
+        self.assertRaises(RuntimeError, lambda: Serializer(data='foo'))
+
 
 if __name__ == '__main__':
     unittest.main()
