@@ -14,17 +14,17 @@ class TestFields(unittest.TestCase):
     def test_as_getter_none(self):
         self.assertEqual(Field().as_getter(None, None), None)
 
-    def test_is_to_value_overriden(self):
+    def test_is_to_value_overridden(self):
         class TransField(Field):
             def to_value(self, value):
                 return value
 
         field = Field()
-        self.assertFalse(field._is_to_value_overriden())
+        self.assertFalse(field._is_to_value_overridden())
         field = TransField()
-        self.assertTrue(field._is_to_value_overriden())
+        self.assertTrue(field._is_to_value_overridden())
         field = IntField()
-        self.assertTrue(field._is_to_value_overriden())
+        self.assertTrue(field._is_to_value_overridden())
 
     def test_str_field(self):
         field = StrField()
