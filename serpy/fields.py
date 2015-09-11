@@ -42,9 +42,9 @@ class Field(object):
         return value
     to_value._serpy_base_implementation = True
 
-    def _is_to_value_overriden(self):
+    def _is_to_value_overridden(self):
         to_value = self.to_value
-        # If to_value isn't a method, it must have been overriden.
+        # If to_value isn't a method, it must have been overridden.
         if not isinstance(to_value, types.MethodType):
             return True
         return not getattr(to_value, '_serpy_base_implementation', False)

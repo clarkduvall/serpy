@@ -12,9 +12,9 @@ def _compile_field_to_tuple(field, name, serializer_cls):
     if getter is None:
         getter = serializer_cls.default_getter(field.attr or name)
 
-    # Only set a to_value function if it has been overriden for performance.
+    # Only set a to_value function if it has been overridden for performance.
     to_value = None
-    if field._is_to_value_overriden():
+    if field._is_to_value_overridden():
         to_value = field.to_value
 
     return (name, getter, to_value, field.call, field.required,
