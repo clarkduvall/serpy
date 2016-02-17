@@ -17,7 +17,10 @@ def _compile_field_to_tuple(field, name, serializer_cls):
     if field._is_to_value_overridden():
         to_value = field.to_value
 
-    return (name, getter, to_value, field.call, field.required, field.label,
+    # Set the field name to a supplied label; if none, set it to the attribute name.
+    name = field.label or name
+
+    return (name, getter, to_value, field.call, field.required,
             field.getter_takes_serializer)
 
 
@@ -97,7 +100,7 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
 
     def _serialize(self, instance, fields):
         v = {}
-        for name, getter, to_value, call, required, label, pass_self in fields:
+        for name, getter, to_value, call, required, pass_self in fields:
             if pass_self:
                 result = getter(self, instance)
             else:
@@ -107,7 +110,7 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
                         result = result()
                     if to_value:
                         result = to_value(result)
-            v[label or name] = result
+            v[name] = result
 
         return v
 
