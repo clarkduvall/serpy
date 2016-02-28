@@ -67,5 +67,10 @@ class TestFields(unittest.TestCase):
 
         self.assertTrue(MethodField.getter_takes_serializer)
 
+    def test_field_label(self):
+        field1 = StrField(label="@id")
+        self.assertEqual(field1.label, "@id")
+
+
 if __name__ == '__main__':
     unittest.main()

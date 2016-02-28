@@ -17,6 +17,9 @@ def _compile_field_to_tuple(field, name, serializer_cls):
     if field._is_to_value_overridden():
         to_value = field.to_value
 
+    # Set the field name to a supplied label; defaults to the attribute name.
+    name = field.label or name
+
     return (name, getter, to_value, field.call, field.required,
             field.getter_takes_serializer)
 

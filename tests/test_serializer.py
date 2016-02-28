@@ -173,6 +173,22 @@ class TestSerializer(unittest.TestCase):
     def test_error_on_data(self):
         self.assertRaises(RuntimeError, lambda: Serializer(data='foo'))
 
+    def test_serializer_with_custom_output_label(self):
+        class ASerializer(Serializer):
+            context = StrField(label="@context")
+            content = MethodField(label="@content")
+
+            def get_content(self, obj):
+                return obj.content
+
+        o = Obj(context="http://foo/bar/baz/", content="http://baz/bar/foo/")
+        data = ASerializer(o).data
+
+        self.assertTrue("@context" in data)
+        self.assertEqual(data["@context"], "http://foo/bar/baz/")
+        self.assertTrue("@content" in data)
+        self.assertEqual(data["@content"], "http://baz/bar/foo/")
+
 
 if __name__ == '__main__':
     unittest.main()

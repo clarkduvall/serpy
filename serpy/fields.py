@@ -23,9 +23,10 @@ class Field(object):
     #: first argument. Otherwise, the object will be the only parameter.
     getter_takes_serializer = False
 
-    def __init__(self, attr=None, call=False, required=True):
+    def __init__(self, attr=None, call=False, label=None, required=True):
         self.attr = attr
         self.call = call
+        self.label = label
         self.required = required
 
     def to_value(self, value):
