@@ -15,6 +15,8 @@ class Field(object):
         field was assigned to on the serializer will be used.
     :param bool call: Whether the value should be called after it is retrieved
         from the object. Useful if an object has a method to be serialized.
+    :param str label: A label to use as the name of the serialized field
+        instead of using the attribute name of the field.
     :param bool required: Whether the field is required. If set to ``False``,
         :meth:`Field.to_value` will not be called if the value is ``None``.
     """
