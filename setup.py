@@ -1,7 +1,6 @@
 from codecs import open
 from os import path
 from setuptools import setup, find_packages
-import serpy
 
 here = path.abspath(path.dirname(__file__))
 
@@ -10,7 +9,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='serpy',
-    version=serpy.__version__,
+    version='0.1.1',
     description='ridiculously fast object serialization',
     long_description=long_description,
     url='https://github.com/clarkduvall/serpy',
