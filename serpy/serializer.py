@@ -103,17 +103,28 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
     def _serialize(self, instance, fields):
         v = {}
         for name, getter, to_value, call, required, pass_self in fields:
+            # NB: Catch AttributeError for objects; KeyError for dictionaries
             if pass_self:
-                result = getter(self, instance)
+                try:
+                    result = getter(self, instance)
+                except (AttributeError, KeyError):
+                    if required:
+                        raise
+                    continue
             else:
-                result = getter(instance)
+                try:
+                    result = getter(instance)
+                except (AttributeError, KeyError):
+                    if required:
+                        raise
+                    continue
+
                 if required or result is not None:
                     if call:
                         result = result()
                     if to_value:
                         result = to_value(result)
             v[name] = result
-
         return v
 
     def to_value(self, instance):

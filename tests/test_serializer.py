@@ -1,5 +1,7 @@
 from .obj import Obj
-from serpy.fields import Field, MethodField, IntField, FloatField, StrField
+from serpy.fields import (
+    Field, MethodField, IntField, FloatField, StrField, BoolField
+)
 from serpy.serializer import Serializer, DictSerializer
 import unittest
 
@@ -156,18 +158,70 @@ class TestSerializer(unittest.TestCase):
         class ASerializer(Serializer):
             a = IntField(required=False)
 
-        o = Obj(a=None)
+        class BSerializer(Serializer):
+            b = IntField()
+
+        class CSerializer(DictSerializer):
+            c = IntField(required=False)
+
+        class DSerializer(DictSerializer):
+            d = IntField()
+
+        class ESerializer(Serializer):
+            e = CSerializer(required=False)
+
+        o = Obj()
         data = ASerializer(o).data
-        self.assertEqual(data['a'], None)
+        # Tests that a missing key is not reflected in the output
+        # but with required=False does not raise an exception.
+        self.assertTrue('a' not in data)
+
+        o = Obj()
+        self.assertRaises(AttributeError, lambda: BSerializer(o).data)
+
+        d = {}
+        data = CSerializer(d).data
+        self.assertTrue('c' not in data)
+
+        d = {}
+        self.assertRaises(KeyError, lambda: DSerializer(d).data)
+
+        o = Obj()
+        data = ESerializer(o).data
 
         o = Obj(a='5')
         data = ASerializer(o).data
+        # Tests that the key on a non-required field with a value
+        # is in the output
         self.assertEqual(data['a'], 5)
 
+    def test_optional_field_falsy_values(self):
+        # Tests the interactions between falsy values (0 or "")
+        # and the required flag.
         class ASerializer(Serializer):
+            a = IntField(required=False)
+            b = BoolField(required=False)
+            # Check the falsy values of empty strings and
+            # whether they pass as both required and non-required fields.
+            c = StrField()
+            d = StrField(required=False)
+
+        o = Obj(a=0, b=False, c="", d="")
+        data = ASerializer(o).data
+        self.assertTrue('a' in data)
+        self.assertTrue('b' in data)
+        # Empty strings should always appear in the output
+        self.assertTrue('c' in data)
+        self.assertTrue('d' in data)
+
+    def test_raises_for_type_coercion_on_none_value(self):
+        class ASerializer(Serializer):
+            # Declare a required field
             a = IntField()
 
         o = Obj(a=None)
+        # Tests that a required field will raise an error
+        # if a None value is passed to it.
         self.assertRaises(TypeError, lambda: ASerializer(o).data)
 
     def test_error_on_data(self):
