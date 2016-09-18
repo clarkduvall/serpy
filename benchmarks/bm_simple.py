@@ -1,13 +1,14 @@
-from django.conf import settings
-settings.configure()
-
 import django
-django.setup()
-
-from rest_framework import serializers as rf_serializers
-from utils import write_csv
 import marshmallow
 import serpy
+
+from django.conf import settings
+from rest_framework import serializers as rf_serializers
+from utils import write_csv
+
+
+django.setup()
+settings.configure()
 
 
 class SimpleRF(rf_serializers.Serializer):
