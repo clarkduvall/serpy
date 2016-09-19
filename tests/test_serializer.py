@@ -189,6 +189,23 @@ class TestSerializer(unittest.TestCase):
         self.assertTrue("@content" in data)
         self.assertEqual(data["@content"], "http://baz/bar/foo/")
 
+    def test_add_field_simple(self):
+        class ASerializer(Serializer):
+            a = Field()
+        ASerializer.add_field('b', Field())
+
+        a = Obj(a=5, b=2)
+        self.assertEqual(ASerializer(a).data['a'], 5)
+        self.assertEqual(ASerializer(a).data['b'], 2)
+
+    def test_add_field_no_override(self):
+        class ASerializer(Serializer):
+            a = Field()
+        ASerializer.add_field('a', StrField())
+
+        a = Obj(a=5)
+        self.assertEqual(ASerializer(a).data['a'], 5)
+
 
 if __name__ == '__main__':
     unittest.main()

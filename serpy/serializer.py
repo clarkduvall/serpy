@@ -116,6 +116,19 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
 
         return v
 
+    @classmethod
+    def add_field(cls, name, field):
+        """
+        Add a field to the serializer, this is useful for handling circular
+        dependencies.
+        If a field with this name already exist nothing will be done.
+        """
+        if name in cls._field_map:
+            return
+        cls._field_map[name] = field
+        cls._compiled_fields = cls._compiled_fields \
+            + (_compile_field_to_tuple(field, name, cls),)
+
     def to_value(self, instance):
         fields = self._compiled_fields
         if self.many:
