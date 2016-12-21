@@ -158,7 +158,7 @@ class TestSerializer(unittest.TestCase):
 
         o = Obj(a=None)
         data = ASerializer(o).data
-        self.assertEqual(data['a'], None)
+        self.assertFalse('a' in data)
 
         o = Obj(a='5')
         data = ASerializer(o).data
@@ -166,6 +166,30 @@ class TestSerializer(unittest.TestCase):
 
         class ASerializer(Serializer):
             a = IntField()
+
+        o = Obj(a=None)
+        self.assertRaises(TypeError, lambda: ASerializer(o).data)
+
+    def test_optional_methodfield(self):
+        class ASerializer(Serializer):
+            a = MethodField(required=False)
+
+            def get_a(self, obj):
+                return obj.a
+
+        o = Obj(a=None)
+        data = ASerializer(o).data
+        self.assertFalse('a' in data)
+
+        o = Obj(a='5')
+        data = ASerializer(o).data
+        self.assertEqual(data['a'], '5')
+
+        class ASerializer(Serializer):
+            a = MethodField()
+
+            def get_a(self, obj):
+                return obj.a
 
         o = Obj(a=None)
         self.assertRaises(TypeError, lambda: ASerializer(o).data)
