@@ -190,5 +190,29 @@ class TestSerializer(unittest.TestCase):
         self.assertEqual(data["@content"], "http://baz/bar/foo/")
 
 
+class TestSerializerInheritance(unittest.TestCase):
+
+    def test_delegation(self):
+        """
+        Test that a method on a child class overrides the parent method.
+        """
+
+        class TopLevelSerializer(Serializer):
+
+            thing = MethodField()
+
+            def get_thing(self, obj):
+                return "TopLevelSerializer"
+
+        class ChildSerializer(TopLevelSerializer):
+
+            def get_thing(self, obj):
+                return "ChildSerializer"
+
+        o = Obj()
+
+        self.assertEqual("ChildSerializer", ChildSerializer(o).data['thing'])
+
+
 if __name__ == '__main__':
     unittest.main()
