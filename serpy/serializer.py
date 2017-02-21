@@ -1,46 +1,84 @@
-from serpy.fields import Field
 import operator
 import six
 
+from serpy.fields import Field
+
 
 class SerializerBase(Field):
-    _field_map = {}
+    pass
 
 
-def _compile_field_to_tuple(field, name, serializer_cls):
+def _compile_read_field_to_tuple(field, name, serializer_cls):
     getter = field.as_getter(name, serializer_cls)
     if getter is None:
-        getter = serializer_cls.default_getter(field.attr or name)
+        getter = serializer_cls._meta.default_getter(field.attr or name)
 
-    # Only set a to_value function if it has been overridden for performance.
-    to_value = None
-    if field._is_to_value_overridden():
-        to_value = field.to_value
+    # Only set a to_representation function if it has been overridden
+    # for performance.
+    to_representation = None
+    if field._is_to_representation_overridden():
+        to_representation = field.to_representation
 
     # Set the field name to a supplied label; defaults to the attribute name.
     name = field.label or name
 
-    return (name, getter, to_value, field.call, field.required,
+    return (name, getter, to_representation, field.call, field.required,
             field.getter_takes_serializer)
+
+
+def _compile_write_field_to_tuple(field, name, serializer_cls):
+    setter = field.as_setter(name, serializer_cls)
+    if setter is None:
+        setter = serializer_cls._meta.default_setter(field.attr or name)
+
+    # Only set a to_internal_value function if it has been overridden
+    # for performance.
+    to_internal_value = None
+    if field._is_to_internal_value_overridden():
+        to_internal_value = field.to_internal_value
+
+    return (name, setter, to_internal_value, field.call, field.required,
+            field.setter_takes_serializer)
 
 
 class SerializerMeta(type):
 
     @staticmethod
-    def _get_fields(direct_fields, serializer_cls):
+    def _compile_meta(direct_fields, serializer_meta, serializer_cls):
         field_map = {}
+        meta_bases = ()
         # Get all the fields from base classes.
-        for cls in serializer_cls.__mro__[::-1]:
-            if issubclass(cls, SerializerBase):
-                field_map.update(cls._field_map)
+        for cls in serializer_cls.__bases__[::-1]:
+            if issubclass(cls, SerializerBase) and cls is not SerializerBase:
+                field_map.update(cls._meta._field_map)
+                meta_bases = meta_bases + (type(cls._meta),)
         field_map.update(direct_fields)
+        if serializer_meta:
+            meta_bases = meta_bases + (serializer_meta,)
 
-        compiled_fields = [
-            _compile_field_to_tuple(field, name, serializer_cls)
+        # get the right order of meta bases
+        meta_bases = meta_bases[::-1]
+
+        compiled_read_fields = [
+            _compile_read_field_to_tuple(field, name, serializer_cls)
             for name, field in field_map.items()
-        ]
+            ]
 
-        return field_map, compiled_fields
+        compiled_write_fields = [
+            _compile_write_field_to_tuple(field, name, serializer_cls)
+            for name, field in field_map.items()
+            if not field.read_only
+            ]
+
+        # automatically create an inner-class Meta that inherits from
+        # parent class's inner-class Meta
+        Meta = type('Meta', meta_bases, {})
+        meta = Meta()
+        meta._field_map = field_map
+        meta._compiled_read_fields = compiled_read_fields
+        meta._compiled_write_fields = compiled_write_fields
+
+        return meta
 
     def __new__(cls, name, bases, attrs):
         # Fields declared directly on the class.
@@ -53,13 +91,29 @@ class SerializerMeta(type):
         for k in direct_fields.keys():
             del attrs[k]
 
+        serializer_meta = attrs.pop('Meta', None)
+
         real_cls = super(SerializerMeta, cls).__new__(cls, name, bases, attrs)
 
-        field_map, compiled_fields = cls._get_fields(direct_fields, real_cls)
+        real_cls._meta = cls._compile_meta(
+            direct_fields, serializer_meta, real_cls
+        )
 
-        real_cls._field_map = field_map
-        real_cls._compiled_fields = tuple(compiled_fields)
         return real_cls
+
+
+@staticmethod
+def attrsetter(attr_name):
+    """
+    attrsetter(attr) --> attrsetter object
+
+    Return a callable object that sets the given attribute(s) on its first
+    operand as the second operand
+    After f = attrsetter('name'), the call f(o, val) executes: o.name = val
+    """
+    def _attrsetter(obj, val):
+        setattr(obj, attr_name, val)
+    return _attrsetter
 
 
 class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
@@ -77,17 +131,25 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
             bar = Field()
 
         foo = Foo(foo='hello', bar=5)
-        FooSerializer(foo).data
+        FooSerializer(instance=foo).data
         # {'foo': 'hello', 'bar': 5}
 
+    A particular Serializer object can either serialize or deserialize, but
+    not both.
+
     :param instance: The object or objects to serialize.
+    :param data: The data to deserialize.
+    :param klass: The class for instantiating the deserialized object
     :param bool many: If ``instance`` is a collection of objects, set ``many``
         to ``True`` to serialize to a list.
     :param context: Currently unused parameter for compatability with Django
         REST Framework serializers.
     """
-    #: The default getter used if :meth:`Field.as_getter` returns None.
-    default_getter = operator.attrgetter
+    # Inner-class
+    class Meta(object):
+        cls = None
+        default_getter = operator.attrgetter
+        default_setter = attrsetter
 
     def __init__(self, instance=None, many=False, data=None, context=None,
                  **kwargs):
@@ -96,13 +158,19 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
                 'serpy serializers do not support input validation')
 
         super(Serializer, self).__init__(**kwargs)
-        self.instance = instance
+        self._can_serialize = instance is not None
+        self._can_deserialize = not self._can_serialize and data is not None
+        if self._can_serialize:
+            self._initial_instance = instance
+            self._data = None
+        elif self._can_deserialize:
+            self._initial_data = data
+            self._instance = None
         self.many = many
-        self._data = None
 
     def _serialize(self, instance, fields):
         v = {}
-        for name, getter, to_value, call, required, pass_self in fields:
+        for name, getter, to_repr, call, required, pass_self in fields:
             if pass_self:
                 result = getter(self, instance)
             else:
@@ -110,29 +178,63 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
                 if required or result is not None:
                     if call:
                         result = result()
-                    if to_value:
-                        result = to_value(result)
+                    if to_repr:
+                        result = to_repr(result)
             v[name] = result
 
         return v
 
-    def to_value(self, instance):
-        fields = self._compiled_fields
+    def _deserialize(self, data, fields):
+        v = self._meta.cls()
+        for name, setter, to_internal, call, required, pass_self in fields:
+            if pass_self:
+                setter(self, v, data[name])
+            else:
+                if required:
+                    value = data[name]
+                else:
+                    value = data.get(name)
+                if to_internal and (required or value is not None):
+                    value = to_internal(value)
+                setter(v, value)
+        return v
+
+    def to_representation(self, instance):
+        fields = self._meta._compiled_read_fields
         if self.many:
             serialize = self._serialize
             return [serialize(o, fields) for o in instance]
         return self._serialize(instance, fields)
 
+    def to_internal_value(self, data):
+        fields = self._meta._compiled_write_fields
+        if self.many:
+            deserialize = self._deserialize
+            return [deserialize(o, fields) for o in data]
+        return self._deserialize(data, fields)
+
     @property
     def data(self):
         """Get the serialized data from the :class:`Serializer`.
 
-        The data will be cached for future accesses.
+        The return value will be cached for future accesses.
         """
         # Cache the data for next time .data is called.
         if self._data is None:
-            self._data = self.to_value(self.instance)
+            self._data = self.to_representation(self._initial_instance)
         return self._data
+
+    @property
+    def deserialized_value(self):
+        """Get the deserialized value from the :class:`Serializer`.
+
+        The return value will be cached for future accesses.
+        """
+        # Cache the deserialized_value for next time .deserialized_value is
+        # called.
+        if self._instance is None:
+            self._instance = self.to_internal_value(self._initial_data)
+        return self._instance
 
 
 class DictSerializer(Serializer):
@@ -149,7 +251,8 @@ class DictSerializer(Serializer):
             bar = FloatField()
 
         foo = {'foo': '5', 'bar': '2.2'}
-        FooSerializer(foo).data
+        FooSerializer(instance=foo).data
         # {'foo': 5, 'bar': 2.2}
     """
-    default_getter = operator.itemgetter
+    class Meta:
+        default_getter = operator.itemgetter
