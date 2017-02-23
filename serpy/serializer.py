@@ -153,9 +153,6 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
 
     def __init__(self, instance=None, many=False, data=None, context=None,
                  **kwargs):
-        if data is not None:
-            raise RuntimeError(
-                'serpy serializers do not support input validation')
 
         super(Serializer, self).__init__(**kwargs)
         self._can_serialize = instance is not None

@@ -367,9 +367,6 @@ class TestSerializer(unittest.TestCase):
         self.assertRaises(AttributeError,
                           lambda: serializer.deserialized_value)
 
-    def test_error_on_data(self):
-        self.assertRaises(RuntimeError, lambda: Serializer(data='foo'))
-
     def test_serializer_with_custom_output_label(self):
         class ASerializer(Serializer):
             context = StrField(label="@context")
