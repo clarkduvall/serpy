@@ -120,7 +120,10 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
         fields = self._compiled_fields
         if self.many:
             serialize = self._serialize
-            return [serialize(o, fields) for o in instance]
+            try:
+                return [serialize(o, fields) for o in instance]
+            except TypeError:
+                return [serialize(o, fields) for o in instance.all()]
         return self._serialize(instance, fields)
 
     @property
