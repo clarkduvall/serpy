@@ -34,13 +34,14 @@ class SerializerMeta(type):
             if issubclass(cls, SerializerBase):
                 field_map.update(cls._field_map)
         field_map.update(direct_fields)
+        return field_map
 
-        compiled_fields = [
+    @staticmethod
+    def _compile_fields(field_map, serializer_cls):
+        return [
             _compile_field_to_tuple(field, name, serializer_cls)
             for name, field in field_map.items()
         ]
-
-        return field_map, compiled_fields
 
     def __new__(cls, name, bases, attrs):
         # Fields declared directly on the class.
@@ -55,7 +56,8 @@ class SerializerMeta(type):
 
         real_cls = super(SerializerMeta, cls).__new__(cls, name, bases, attrs)
 
-        field_map, compiled_fields = cls._get_fields(direct_fields, real_cls)
+        field_map = cls._get_fields(direct_fields, real_cls)
+        compiled_fields = cls._compile_fields(field_map, real_cls)
 
         real_cls._field_map = field_map
         real_cls._compiled_fields = tuple(compiled_fields)
