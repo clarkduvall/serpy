@@ -9,7 +9,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='serpy',
-    version='0.1.1',
+    version='0.2.0',
     description='ridiculously fast object serialization',
     long_description=long_description,
     url='https://github.com/clarkduvall/serpy',
