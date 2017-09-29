@@ -158,7 +158,7 @@ class TestSerializer(unittest.TestCase):
 
         o = Obj(a=None)
         data = ASerializer(o).data
-        self.assertFalse('a' in data)
+        self.assertNotIn('a', data)
 
         o = Obj(a='5')
         data = ASerializer(o).data
@@ -168,7 +168,8 @@ class TestSerializer(unittest.TestCase):
             a = IntField()
 
         o = Obj(a=None)
-        self.assertRaises(TypeError, lambda: ASerializer(o).data)
+        with self.assertRaises(TypeError):
+            ASerializer(o).data
 
     def test_optional_methodfield(self):
         class ASerializer(Serializer):
@@ -179,7 +180,7 @@ class TestSerializer(unittest.TestCase):
 
         o = Obj(a=None)
         data = ASerializer(o).data
-        self.assertFalse('a' in data)
+        self.assertNotIn('a', data)
 
         o = Obj(a='5')
         data = ASerializer(o).data
@@ -192,26 +193,28 @@ class TestSerializer(unittest.TestCase):
                 return obj.a
 
         o = Obj(a=None)
-        self.assertRaises(TypeError, lambda: ASerializer(o).data)
+        with self.assertRaises(TypeError):
+            ASerializer(o).data
 
     def test_error_on_data(self):
-        self.assertRaises(RuntimeError, lambda: Serializer(data='foo'))
+        with self.assertRaises(RuntimeError):
+            Serializer(data='foo')
 
     def test_serializer_with_custom_output_label(self):
         class ASerializer(Serializer):
-            context = StrField(label="@context")
-            content = MethodField(label="@content")
+            context = StrField(label='@context')
+            content = MethodField(label='@content')
 
             def get_content(self, obj):
                 return obj.content
 
-        o = Obj(context="http://foo/bar/baz/", content="http://baz/bar/foo/")
+        o = Obj(context='http://foo/bar/baz/', content='http://baz/bar/foo/')
         data = ASerializer(o).data
 
-        self.assertTrue("@context" in data)
-        self.assertEqual(data["@context"], "http://foo/bar/baz/")
-        self.assertTrue("@content" in data)
-        self.assertEqual(data["@content"], "http://baz/bar/foo/")
+        self.assertIn('@context', data)
+        self.assertEqual(data['@context'], 'http://foo/bar/baz/')
+        self.assertIn('@content', data)
+        self.assertEqual(data['@content'], 'http://baz/bar/foo/')
 
 
 if __name__ == '__main__':
