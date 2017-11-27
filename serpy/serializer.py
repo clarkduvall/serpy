@@ -105,19 +105,31 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
     def _serialize(self, instance, fields):
         v = {}
         for name, getter, to_value, call, required, pass_self in fields:
-            if pass_self:
-                result = getter(self, instance)
-            else:
-                result = getter(instance)
+            result = None
+
+            try:
+                if pass_self:
+                    result = getter(self, instance)
+                else:
+                    result = getter(instance)
+            except (AttributeError, KeyError):
+                if required:
+                    raise TypeError('Field {0} is required', name)
+                # If the key raises an exception and it is not required,
+                # it is absent from the object. We can ignore it and continue
+                # to the next field. If it is required, this will raise
+                # the error.
+                continue
+
+            if result is None:
+                continue
+
             if required or result is not None:
                 if call:
                     result = result()
                 if to_value:
                     result = to_value(result)
-                if result is None and required:
-                    raise TypeError('Field {0} is required', name)
-                else:
-                    v[name] = result
+                v[name] = result
 
         return v
 

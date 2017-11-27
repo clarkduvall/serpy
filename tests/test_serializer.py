@@ -155,21 +155,29 @@ class TestSerializer(unittest.TestCase):
     def test_optional_field(self):
         class ASerializer(Serializer):
             a = IntField(required=False)
+            b = IntField(required=False)
 
         o = Obj(a=None)
         data = ASerializer(o).data
         self.assertNotIn('a', data)
+        self.assertNotIn('b', data)
 
-        o = Obj(a='5')
+        o = Obj(a='5', b='10', x='y')
         data = ASerializer(o).data
         self.assertEqual(data['a'], 5)
+        self.assertEqual(data['b'], 10)
+        # Check that an object value does not make it to the
+        # serialized value
+        self.assertNotIn('x', data)
 
-        class ASerializer(Serializer):
+        class BSerializer(Serializer):
             a = IntField()
+            b = IntField()
 
-        o = Obj(a=None)
+        o = Obj(a='5')
+        # Test that a required field raises a type error.
         with self.assertRaises(TypeError):
-            ASerializer(o).data
+            BSerializer(o).data
 
     def test_optional_methodfield(self):
         class ASerializer(Serializer):
@@ -178,23 +186,42 @@ class TestSerializer(unittest.TestCase):
             def get_a(self, obj):
                 return obj.a
 
+        # Check that an optional method field with a None value
+        # will not put the value in the output.
         o = Obj(a=None)
         data = ASerializer(o).data
         self.assertNotIn('a', data)
 
+        # Check that an optional method field will pass the field
+        # if there is a value in it.
         o = Obj(a='5')
         data = ASerializer(o).data
+        self.assertIn('a', data)
         self.assertEqual(data['a'], '5')
 
-        class ASerializer(Serializer):
-            a = MethodField()
+        class BSerializer(Serializer):
+            b = MethodField()
 
-            def get_a(self, obj):
-                return obj.a
+            def get_b(self, obj):
+                return obj.b
 
-        o = Obj(a=None)
+        # Check that a required method field with a none return value
+        # will not serialize output in the data
+        o = Obj(b=None)
+        data = BSerializer(o).data
+        self.assertNotIn('b', data)
+
+        class CSerializer(Serializer):
+            c = MethodField()
+
+            def get_c(self, obj):
+                return obj.c
+
+        # Check that a required method field without a required object
+        # attribute will raise a type error.
+        o = Obj()
         with self.assertRaises(TypeError):
-            ASerializer(o).data
+            CSerializer(o).data
 
     def test_error_on_data(self):
         with self.assertRaises(RuntimeError):
