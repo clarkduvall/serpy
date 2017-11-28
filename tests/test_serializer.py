@@ -152,13 +152,13 @@ class TestSerializer(unittest.TestCase):
         data = ASerializer(o).data
         self.assertEqual(data['a'], 15)
 
-    def test_optional_field(self):
+    def test_optional_intfield(self):
         class ASerializer(Serializer):
             a = IntField(required=False)
 
         o = Obj(a=None)
         data = ASerializer(o).data
-        self.assertNotIn('a', data)
+        self.assertIsNone(data['a'])
 
         o = Obj(a='5')
         data = ASerializer(o).data
@@ -171,6 +171,48 @@ class TestSerializer(unittest.TestCase):
         with self.assertRaises(TypeError):
             ASerializer(o).data
 
+    def test_optional_field_dictserializer(self):
+        class ASerializer(DictSerializer):
+            a = Field(required=False)
+
+        data = ASerializer({'a': None}).data
+        self.assertIsNone(data['a'])
+
+        data = ASerializer({}).data
+        self.assertNotIn('a', data)
+
+        class ASerializer(DictSerializer):
+            a = Field()
+
+        data = ASerializer({'a': None}).data
+        self.assertIsNone(data['a'])
+
+        with self.assertRaises(KeyError):
+            ASerializer({}).data
+
+    def test_optional_field(self):
+        class ASerializer(Serializer):
+            a = Field(required=False)
+
+        o = Obj(a=None)
+        data = ASerializer(o).data
+        self.assertIsNone(data['a'])
+
+        o = Obj()
+        data = ASerializer(o).data
+        self.assertNotIn('a', data)
+
+        class ASerializer(Serializer):
+            a = Field()
+
+        o = Obj(a=None)
+        data = ASerializer(o).data
+        self.assertIsNone(data['a'])
+
+        o = Obj()
+        with self.assertRaises(AttributeError):
+            ASerializer(o).data
+
     def test_optional_methodfield(self):
         class ASerializer(Serializer):
             a = MethodField(required=False)
@@ -180,7 +222,7 @@ class TestSerializer(unittest.TestCase):
 
         o = Obj(a=None)
         data = ASerializer(o).data
-        self.assertNotIn('a', data)
+        self.assertIsNone(data['a'])
 
         o = Obj(a='5')
         data = ASerializer(o).data
@@ -193,8 +235,8 @@ class TestSerializer(unittest.TestCase):
                 return obj.a
 
         o = Obj(a=None)
-        with self.assertRaises(TypeError):
-            ASerializer(o).data
+        data = ASerializer(o).data
+        self.assertIsNone(data['a'])
 
     def test_error_on_data(self):
         with self.assertRaises(RuntimeError):
