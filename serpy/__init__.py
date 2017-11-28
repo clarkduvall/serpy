@@ -2,7 +2,7 @@ from serpy.fields import (
     Field, BoolField, IntField, FloatField, MethodField, StrField)
 from serpy.serializer import Serializer, DictSerializer
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Clark DuVall'
 __license__ = 'MIT'
 
