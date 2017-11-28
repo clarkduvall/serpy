@@ -106,13 +106,7 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
         v = {}
         for name, getter, to_value, call, required, pass_self in fields:
             if pass_self:
-                try:
-                    result = getter(self, instance)
-                except (KeyError, AttributeError):
-                    if required:
-                        raise
-                    else:
-                        continue
+                result = getter(self, instance)
             else:
                 try:
                     result = getter(instance)
