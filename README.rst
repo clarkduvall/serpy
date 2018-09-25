@@ -135,7 +135,7 @@ Complex Example
         x = serpy.Field(call=True)
         plus = serpy.MethodField()
 
-        def get_plus(self, obj):
+        def get_plus(self, obj, context):
             return obj.y + obj.z
 
     f = Foo()
@@ -169,6 +169,32 @@ Inheritance Example
     # {'a': 1}
     ABSerializer(f).data
     # {'a': 1, 'b': 2}
+
+Context Example
+---------------
+
+Context is just an object passed to each getter. It can be of any type.
+
+.. code-block:: python
+
+    import serpy
+
+    class ContextedField(serpy.Field):
+
+        def to_value(self, value, context):
+            return context.do_something(value)
+
+
+    class ASerializer(serpy.Serializer):
+        a = serpy.ContextedField()
+        b = serpy.MethodVield()
+
+        def get_b(self, value, context):
+            user = context.request.user
+            return value if user.is_authenticated else None
+
+    f = Foo()
+    ASerializer(f, context=context).data
 
 License
 =======

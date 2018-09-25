@@ -85,8 +85,9 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
     :param instance: The object or objects to serialize.
     :param bool many: If ``instance`` is a collection of objects, set ``many``
         to ``True`` to serialize to a list.
-    :param context: Currently unused parameter for compatability with Django
-        REST Framework serializers.
+    :param context: Parameter for compatibility with Django
+        REST Framework serializers. Is passed as second argument to ``to_value``
+        and getters methods.
     """
     #: The default getter used if :meth:`Field.as_getter` returns None.
     default_getter = operator.attrgetter
@@ -99,14 +100,16 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
 
         super(Serializer, self).__init__(**kwargs)
         self.instance = instance
+        self.context = context
         self.many = many
         self._data = None
 
-    def _serialize(self, instance, fields):
+    def _serialize(self, instance, fields, context):
         v = {}
         for name, getter, to_value, call, required, pass_self in fields:
             if pass_self:
-                result = getter(self, instance)
+                # MethodField
+                result = getter(self, instance, context)
             else:
                 try:
                     result = getter(instance)
@@ -119,17 +122,17 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
                     if call:
                         result = result()
                     if to_value:
-                        result = to_value(result)
+                        result = to_value(result, context)
             v[name] = result
 
         return v
 
-    def to_value(self, instance):
+    def to_value(self, instance, context):
         fields = self._compiled_fields
         if self.many:
             serialize = self._serialize
-            return [serialize(o, fields) for o in instance]
-        return self._serialize(instance, fields)
+            return [serialize(o, fields, context) for o in instance]
+        return self._serialize(instance, fields, context)
 
     @property
     def data(self):
@@ -139,7 +142,7 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
         """
         # Cache the data for next time .data is called.
         if self._data is None:
-            self._data = self.to_value(self.instance)
+            self._data = self.to_value(self.instance, self.context)
         return self._data
 
 

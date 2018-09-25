@@ -95,18 +95,20 @@ class TestSerializer(unittest.TestCase):
         self.assertEqual(BSerializer(b).data['b']['a'], 3)
 
     def test_serializer_method_field(self):
+        context = {5: 5, 9: 9}
+
         class ASerializer(Serializer):
             a = MethodField()
             b = MethodField('add_9')
 
-            def get_a(self, obj):
-                return obj.a + 5
+            def get_a(self, obj, context):
+                return obj.a + context[5]
 
-            def add_9(self, obj):
-                return obj.a + 9
+            def add_9(self, obj, context):
+                return obj.a + context[9]
 
         a = Obj(a=2)
-        data = ASerializer(a).data
+        data = ASerializer(a, context=context).data
         self.assertEqual(data['a'], 7)
         self.assertEqual(data['b'], 11)
 
@@ -142,7 +144,7 @@ class TestSerializer(unittest.TestCase):
 
     def test_custom_field(self):
         class Add5Field(Field):
-            def to_value(self, value):
+            def to_value(self, value, context):
                 return value + 5
 
         class ASerializer(Serializer):
@@ -247,7 +249,7 @@ class TestSerializer(unittest.TestCase):
             context = StrField(label='@context')
             content = MethodField(label='@content')
 
-            def get_content(self, obj):
+            def get_content(self, obj, context):
                 return obj.content
 
         o = Obj(context='http://foo/bar/baz/', content='http://baz/bar/foo/')

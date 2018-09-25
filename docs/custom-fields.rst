@@ -10,7 +10,7 @@ adds 5 to every value it serializes, do:
 .. code-block:: python
 
    class Add5Field(serpy.Field):
-      def to_value(self, value):
+      def to_value(self, value, context):
          return value + 5
 
 Then to use it:
@@ -34,7 +34,7 @@ every serialized value has a ``'.'`` in it:
 .. code-block:: python
 
    class ValidateDotField(serpy.Field):
-      def to_value(self, value):
+      def to_value(self, value, context):
          if '.' not in value:
             raise ValidationError('no dot!')
          return value
