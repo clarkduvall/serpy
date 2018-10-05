@@ -158,7 +158,7 @@ class TestSerializer(unittest.TestCase):
 
         o = Obj(a=None)
         data = ASerializer(o).data
-        self.assertIsNone(data['a'])
+        self.assertNotIn('a', data)
 
         o = Obj(a='5')
         data = ASerializer(o).data
@@ -176,9 +176,6 @@ class TestSerializer(unittest.TestCase):
             a = Field(required=False)
 
         data = ASerializer({'a': None}).data
-        self.assertIsNone(data['a'])
-
-        data = ASerializer({}).data
         self.assertNotIn('a', data)
 
         class ASerializer(DictSerializer):
@@ -195,10 +192,6 @@ class TestSerializer(unittest.TestCase):
             a = Field(required=False)
 
         o = Obj(a=None)
-        data = ASerializer(o).data
-        self.assertIsNone(data['a'])
-
-        o = Obj()
         data = ASerializer(o).data
         self.assertNotIn('a', data)
 

@@ -115,6 +115,9 @@ class Serializer(six.with_metaclass(SerializerMeta, SerializerBase)):
                         raise
                     else:
                         continue
+                if not required and not result:
+                    continue
+
                 if required or result is not None:
                     if call:
                         result = result()
