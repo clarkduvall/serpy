@@ -2,6 +2,18 @@ import six
 import types
 
 
+class GlobalCounter(object):
+
+    _value = 0
+
+    @property
+    def value(self):
+        self._value += 1
+        return self._value
+
+global_counter = GlobalCounter()
+
+
 class Field(object):
     """:class:`Field` is used to define what attributes will be serialized.
 
@@ -30,6 +42,7 @@ class Field(object):
         self.call = call
         self.label = label
         self.required = required
+        self._creation_counter = global_counter.value
 
     def to_value(self, value):
         """Transform the serialized value.
