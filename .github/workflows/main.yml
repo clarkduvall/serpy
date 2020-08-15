@@ -28,6 +28,8 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with tox
         run: tox
+      - name: Coverage
+        run: coverage run --source=serpy setup.py test
       - name: Python wheels manylinux build
         uses: RalfG/python-wheels-manylinux-build@v0.3.1
       - name: Upload wheel to Github artifacts
