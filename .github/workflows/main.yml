@@ -15,10 +15,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+      - name: Install testing dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 coveralls
+          pip install flake8 coveralls tox
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Lint with flake8
         run: |
@@ -27,7 +27,7 @@ jobs:
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with tox
-        run: tox
+        run: tox -e py
       - name: Coverage
         run: coverage run --source=serpy setup.py test
       - name: Python wheels manylinux build
