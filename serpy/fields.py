@@ -1,5 +1,6 @@
 import six
 import types
+from datetime import datetime
 
 
 class Field(object):
@@ -94,6 +95,14 @@ class FloatField(Field):
 class BoolField(Field):
     """A :class:`Field` that converts the value to a boolean."""
     to_value = staticmethod(bool)
+
+
+class DateTimeField(Field):
+    """A :class:`Field` that converts the value to a datetime."""
+    # The datetime isoformat method outperformed all other datetime to string
+    # translators as `datetime.strftime()`, `str()`,
+    # `pendulum.to_iso8601_string`, `rfc3339.rfc3339`
+    to_value = staticmethod(datetime.isoformat)
 
 
 class MethodField(Field):

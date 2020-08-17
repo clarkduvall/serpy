@@ -1,7 +1,9 @@
 from .obj import Obj
 from serpy.fields import (
-    Field, MethodField, BoolField, IntField, FloatField, StrField)
+    Field, MethodField, BoolField, DateTimeField, IntField, FloatField,
+    StrField)
 import unittest
+from datetime import datetime, timedelta, timezone
 
 
 class TestFields(unittest.TestCase):
@@ -48,6 +50,32 @@ class TestFields(unittest.TestCase):
         field = FloatField()
         self.assertEqual(field.to_value(5.2), 5.2)
         self.assertEqual(field.to_value('5.5'), 5.5)
+
+    def test_datetime_field(self):
+        field = DateTimeField()
+        self.assertEqual(
+            field.to_value(datetime(2011, 11, 4)),
+            '2011-11-04T00:00:00'
+            )
+        self.assertEqual(
+            field.to_value(datetime(2011, 11, 4, 0, 5, 23)),
+            '2011-11-04T00:05:23'
+            )
+        self.assertEqual(
+            field.to_value(datetime(2011, 11, 4, 0, 5, 23, 283000)),
+            '2011-11-04T00:05:23.283000'
+            )
+        self.assertEqual(
+            field.to_value(
+                datetime(2011, 11, 4, 0, 5, 23, 283000, tzinfo=timezone.utc)
+                ),
+            '2011-11-04T00:05:23.283000+00:00'
+            )
+        self.assertEqual(
+            field.to_value(datetime(2011, 11, 4, 0, 5, 23,
+                                    tzinfo=timezone(timedelta(hours=4)))),
+            '2011-11-04T00:05:23+04:00'
+            )
 
     def test_method_field(self):
         class FakeSerializer(object):
