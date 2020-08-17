@@ -11,15 +11,15 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install testing dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 coveralls tox tox-gh-actions
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install flake8 coveralls tox-gh-actions
+          pip install -r requirements.txt
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
