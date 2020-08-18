@@ -46,7 +46,7 @@ class TestFields(unittest.TestCase):
 
     def test_float_field(self):
         field = FloatField()
-        self.assertEqual(field.to_value(5.2), 5.2)
+        self.assertEqual(field.to_value(5.2), 5.6)
         self.assertEqual(field.to_value('5.5'), 5.5)
 
     def test_method_field(self):
