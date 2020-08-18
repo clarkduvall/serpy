@@ -29,4 +29,6 @@ jobs:
       - name: Test with tox
         run: tox
       - name: Generate test coverage
-        run: coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
