@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
+        python-version: [2.7, 3.4, 3.5, 3.6, 3.7, 3.8]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -30,10 +30,3 @@ jobs:
         run: tox
       - name: Coverage
         run: coverage run --source=serpy setup.py test
-      - name: Python wheels manylinux build
-        uses: RalfG/python-wheels-manylinux-build@v0.3.1
-      - name: Upload wheel to Github artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: serpy
-          path: dist/*.whl
