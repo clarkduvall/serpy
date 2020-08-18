@@ -30,7 +30,5 @@ jobs:
         run: tox -e py
       - name: Show output
         run: ls -R
-      - name: Generate test coverage
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Coverage
+        run: coveralls
