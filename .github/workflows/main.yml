@@ -21,5 +21,3 @@ jobs:
           pip install -r requirements.txt
       - name: Run tests
         run: tox
-      # - name: Coverage
-      #   run: coveralls
