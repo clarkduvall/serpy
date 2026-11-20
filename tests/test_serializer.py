@@ -242,6 +242,49 @@ class TestSerializer(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             Serializer(data='foo')
 
+    def test_optional_methodfield_missing_attribute(self):
+        class ASerializer(Serializer):
+            a = MethodField(required=False)
+
+            def get_a(self, obj):
+                return obj.a
+
+        self.assertEqual(ASerializer(Obj()).data, {})
+        self.assertEqual(ASerializer([Obj(), Obj(a=5)], many=True).data,
+                         [{}, {'a': 5}])
+
+    def test_optional_methodfield_missing_key(self):
+        class ASerializer(DictSerializer):
+            a = MethodField('lookup', required=False, label='value')
+
+            def lookup(self, obj):
+                return obj['a']
+
+        self.assertEqual(ASerializer({}).data, {})
+        self.assertEqual(ASerializer({'a': None}).data, {'value': None})
+        self.assertEqual(ASerializer({'a': 5}).data, {'value': 5})
+
+    def test_required_methodfield_propagates_missing_data(self):
+        class ASerializer(Serializer):
+            a = MethodField()
+
+            def get_a(self, obj):
+                raise obj.error
+
+        for error in (KeyError('a'), AttributeError('a')):
+            with self.assertRaises(type(error)):
+                ASerializer(Obj(error=error)).data
+
+    def test_optional_methodfield_propagates_other_errors(self):
+        class ASerializer(Serializer):
+            a = MethodField(required=False)
+
+            def get_a(self, obj):
+                raise ValueError('invalid value')
+
+        with self.assertRaises(ValueError):
+            ASerializer(Obj()).data
+
     def test_serializer_with_custom_output_label(self):
         class ASerializer(Serializer):
             context = StrField(label='@context')
