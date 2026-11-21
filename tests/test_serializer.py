@@ -6,6 +6,46 @@ import unittest
 
 class TestSerializer(unittest.TestCase):
 
+    def test_diamond_inheritance_uses_most_specific_field_declaration(self):
+        class Root(DictSerializer):
+            value = IntField()
+
+        class Left(Root):
+            left = Field()
+
+        class Right(Root):
+            value = StrField()
+            right = Field()
+
+        class Combined(Left, Right):
+            pass
+
+        data = {'value': 7, 'left': 'L', 'right': 'R'}
+        self.assertEqual(Combined(data).data,
+                         {'value': '7', 'left': 'L', 'right': 'R'})
+        self.assertEqual(Left(data).data['value'], 7)
+        self.assertEqual(Right(data).data['value'], '7')
+
+    def test_direct_field_declarations_take_precedence(self):
+        class Root(DictSerializer):
+            value = IntField()
+
+        class Left(Root):
+            value = StrField()
+
+        class Right(Root):
+            value = FloatField()
+
+        class Combined(Left, Right):
+            pass
+
+        class Override(Combined):
+            value = Field(attr='other')
+
+        data = {'value': 7, 'other': 'override'}
+        self.assertEqual(Combined(data).data['value'], '7')
+        self.assertEqual(Override(data).data['value'], 'override')
+
     def test_simple(self):
         class ASerializer(Serializer):
             a = Field()
