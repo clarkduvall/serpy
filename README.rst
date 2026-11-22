@@ -115,6 +115,44 @@ Nested Example
     FooSerializer(f).data
     # {'x': 1, 'nested': {'n': 'hi'}}
 
+Recursive Example
+-----------------
+To nest the serializer being defined, use a ``MethodField``. The method runs
+after Python has created the class, so it can instantiate that same serializer
+for the children. Referring to the class directly in its own class body would
+raise ``NameError``.
+
+.. code-block:: python
+
+    import serpy
+
+    class Person(object):
+        def __init__(self, name, children=()):
+            self.name = name
+            self.children = children
+
+    class PersonSerializer(serpy.Serializer):
+        name = serpy.Field()
+        children = serpy.MethodField()
+
+        def get_children(self, obj):
+            return PersonSerializer(obj.children, many=True).data
+
+    family = Person('Alice', [Person('Bob', [Person('Carol')])])
+    assert PersonSerializer(family).data == {
+        'name': 'Alice',
+        'children': [{
+            'name': 'Bob',
+            'children': [{'name': 'Carol', 'children': []}],
+        }],
+    }
+
+An empty children sequence produces ``[]``. This recipe assumes a finite tree:
+it does not detect cycles or impose a depth limit. For objects with parent
+references, serialize only the child direction, or represent those references
+with identifiers. The ``many=True`` argument applies to the children; the root
+object is still serialized with ``many=False`` (the default).
+
 Complex Example
 ---------------
 .. code-block:: python
