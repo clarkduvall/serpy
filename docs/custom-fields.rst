@@ -39,6 +39,42 @@ every serialized value has a ``'.'`` in it:
             raise ValidationError('no dot!')
          return value
 
+Lists of primitive values
+==========================
+
+The ``many=True`` option applies to serializers. Basic fields such as
+``StrField`` do not take it. To serialize a list of strings, return the list
+from a ``MethodField``, performing any per-item conversion in that method:
+
+.. code-block:: python
+
+    import serpy
+
+    class Record(object):
+        def __init__(self, tags):
+            self.tags = tags
+
+    class RecordSerializer(serpy.Serializer):
+        tags = serpy.MethodField()
+
+        def get_tags(self, obj):
+            return [str(tag) for tag in obj.tags]
+
+    assert RecordSerializer(Record(['news', 7])).data == {
+        'tags': ['news', '7']}
+    assert RecordSerializer(Record([])).data == {'tags': []}
+    assert RecordSerializer(
+        [Record(['news']), Record([])], many=True).data == [
+            {'tags': ['news']}, {'tags': []}]
+
+If a list already contains the exact output values you want, a plain
+``serpy.Field()`` also passes it through unchanged. A ``StrField()`` would
+convert the entire list to one string. For lists of structured objects, use a
+nested serializer with ``many=True`` instead.
+
+Custom getters
+==============
+
 For more control over the behavior of the field, override
 :meth:`serpy.Field.as_getter`. When the :class:`serpy.Serializer` class is
 created, each field will be compiled to a getter, that will be called to get its
